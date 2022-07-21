@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mensagens BTI</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        #container {
+            border: 1px solid black;
+            min-height: 30vh;
+            padding: 1rem;
+            padding-top: 0;
+        }
+
+        #mensagens {
+            overflow-x: hidden;
+            max-height: 30vw;
+            margin-bottom: 1rem;
+        }
+
+        #campo {
+            height: 1.5rem;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <h3>Mensagens BTI:</h3>
+    <div id="container">
+        <div id="mensagens"></div>
+        <input id="campo" placeholder="Mensagem" type="text">
+    </div>
+</body>
+<script>
+    pegarNome()
+    var nome;
+    function pegarNome() {
+        nome = prompt("Insira o seu nome de usuario")
+        if (!nome) {
+            pegarNome()
+        }
+    }
+    const socket = io()
+    socket.on('connect', () => {
+        console.log("conectado como:", socket.id)
+    })
+
+    socket.on('atualizou', (atualizar) => {
+        if(atualizar) location.reload()
+    })
+
+    socket.on('attMensagem', (mensagens) => {
+        let caixa = document.querySelector("#mensagens")
+        caixa.textContent = ""
+        if (mensagens.length == 0) {
+            let linha = document.createElement("p")
+            linha.textContent = "Nenhuma mensagem até agora"
+            caixa.appendChild(linha)
+            return
+        }
+        mensagens.forEach(msg => {
+            let linha = document.createElement("p")
+            linha.textContent = `${msg.hora} - ${msg.origem}: ${msg.msg}`
+            caixa.appendChild(linha)
+        })
+        let tamanhoMax = caixa.scrollHeight
+        caixa.scroll(0, tamanhoMax)
+        let notificacao = new Audio('./sons/notificacao.mp3')
+        notificacao.play()
+    })
+
+    let campo = document.querySelector("#campo")
+    campo.addEventListener("keypress", (event) => {
+        let msg = campo.value
+
+        if (event.key !== "Enter") return
+        if (!msg) return
+
+        let hora = new Date().toLocaleTimeString()
+        socket.emit("msg", { hora, msg, nome })
+        campo.value = ""
+    })
+
+</script>
+
+</html>
