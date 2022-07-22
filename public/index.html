@@ -7,18 +7,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mensagens BTI</title>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/axios/index.js"></script>
     <style>
         #container {
             border: 1px solid black;
             min-height: 30vh;
             padding: 1rem;
-            padding-top: 0;
+        }
+
+        #textos{
+            display: flex;
+            gap: 1rem;
         }
 
         #mensagens {
             overflow-x: hidden;
+            width: 75%;
+            min-height: 30vw;
             max-height: 30vw;
             margin-bottom: 1rem;
+            border: 1px solid black;
+            padding-left: 1rem
+        }
+
+        #nomes{
+            width: 25%;
+            min-height: 30vw;
+            max-height: 30vw;
+            border: 1px solid black
         }
 
         #campo {
@@ -31,26 +47,38 @@
 <body>
     <h3>Mensagens BTI:</h3>
     <div id="container">
-        <div id="mensagens"></div>
+        <div id="textos">
+            <div id="mensagens"></div>
+            <div id="nomes">
+                <h3 style="margin-left: 1rem">Usuarios Conectados</h3>
+                <ul id="listaNomes">
+                </ul>
+            </div>
+        </div>
         <input id="campo" placeholder="Mensagem" type="text">
     </div>
 </body>
 <script>
-    pegarNome()
     var nome;
-    function pegarNome() {
-        nome = prompt("Insira o seu nome de usuario")
-        if (!nome) {
-            pegarNome()
-        }
-    }
+    var mensagemEnviada;
     const socket = io()
+    let campo = document.querySelector("#campo")
+
     socket.on('connect', () => {
         console.log("conectado como:", socket.id)
+        pegarNome()
     })
 
-    socket.on('atualizou', (atualizar) => {
-        if(atualizar) location.reload()
+    campo.addEventListener("keypress", (event) => {
+        let msg = campo.value
+
+        if (event.key !== "Enter") return
+        if (!msg) return
+
+        let hora = new Date().toLocaleTimeString()
+        socket.emit("msg", { hora, msg, nome })
+        campo.value = ""
+        mensagemEnviada = true
     })
 
     socket.on('attMensagem', (mensagens) => {
@@ -69,21 +97,33 @@
         })
         let tamanhoMax = caixa.scrollHeight
         caixa.scroll(0, tamanhoMax)
-        let notificacao = new Audio('./sons/notificacao.mp3')
-        notificacao.play()
+        if (!mensagemEnviada) {
+            let notificacao = new Audio('./sons/notificacao.mp3')
+            notificacao.play()
+        }else{
+            mensagemEnviada = false            
+        }
     })
 
-    let campo = document.querySelector("#campo")
-    campo.addEventListener("keypress", (event) => {
-        let msg = campo.value
-
-        if (event.key !== "Enter") return
-        if (!msg) return
-
-        let hora = new Date().toLocaleTimeString()
-        socket.emit("msg", { hora, msg, nome })
-        campo.value = ""
+    socket.on("nomes", (payload)=>{
+        let lista = document.querySelector("#listaNomes")
+        lista.textContent = ""
+        console.log(payload)
+        payload.forEach(item=>{
+            let itemLista = document.createElement("li")
+            itemLista.textContent = item
+            lista.appendChild(itemLista)
+        })
     })
+
+    function pegarNome() {
+        nome = prompt("Insira o seu nome de usuario")
+        if (!nome) {
+            pegarNome()
+            return
+        }
+        socket.emit("attName", {nome})
+    }
 
 </script>
 
