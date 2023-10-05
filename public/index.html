@@ -7,7 +7,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mensagens BTI</title>
     <script src="/socket.io/socket.io.js"></script>
-    <script src="/axios/index.js"></script>
     <style>
         #container {
             border: 1px solid black;
@@ -15,7 +14,7 @@
             padding: 1rem;
         }
 
-        #textos{
+        #textos {
             display: flex;
             gap: 1rem;
         }
@@ -30,7 +29,7 @@
             padding-left: 1rem
         }
 
-        #nomes{
+        #nomes {
             width: 25%;
             min-height: 30vw;
             max-height: 30vw;
@@ -58,15 +57,22 @@
         <input id="campo" placeholder="Mensagem" type="text">
     </div>
 </body>
-<script>
+<script type="module">
     var nome;
     var mensagemEnviada;
     const socket = io()
     let campo = document.querySelector("#campo")
 
+    let teste = "teste"
+
     socket.on('connect', () => {
         console.log("conectado como:", socket.id)
         pegarNome()
+        socket.emit("rota", teste)
+    })
+
+    socket.on(teste, ()=>{
+        console.log("recebido por", teste);
     })
 
     campo.addEventListener("keypress", (event) => {
@@ -100,16 +106,16 @@
         if (!mensagemEnviada) {
             let notificacao = new Audio('./sons/notificacao.mp3')
             notificacao.play()
-        }else{
-            mensagemEnviada = false            
+        } else {
+            mensagemEnviada = false
         }
     })
 
-    socket.on("nomes", (payload)=>{
+    socket.on("nomes", (payload) => {
         let lista = document.querySelector("#listaNomes")
         lista.textContent = ""
         console.log(payload)
-        payload.forEach(item=>{
+        payload.forEach(item => {
             let itemLista = document.createElement("li")
             itemLista.textContent = item
             lista.appendChild(itemLista)
@@ -122,7 +128,7 @@
             pegarNome()
             return
         }
-        socket.emit("attName", {nome})
+        socket.emit("attName", { nome })
     }
 
 </script>
